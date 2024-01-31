@@ -46,7 +46,7 @@ feature_number = zeros(1,size(pre_trained.newmodel,2));
 yhat_cohort = zeros(size(target,1),size(pre_trained.newmodel,2));
 loss_cohort = zeros(1,size(pre_trained.newmodel,2));
  
-% prediction of target based on pre-trained models
+% prediction of target based on all pre-trained models
 for model = 1:size(pre_trained.newmodel,2)
     
     % confound removal based on pre-trained models
