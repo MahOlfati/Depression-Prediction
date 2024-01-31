@@ -6,7 +6,7 @@
 %                                                                         %
 %   Input parameters:                                                     %
 %       - pre_trained:      Pre-trained model contains models and their   %
-%                           features' ranks.                              %
+%                           features' rank.                               %
 %       - vol:              473 GMV or fALFF or ReHo features.            %
 %       - depression:       Achenbach questionnaire scores.               %
 %       - sleep:            Sleep quality parameters.                     %
