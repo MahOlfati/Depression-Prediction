@@ -72,13 +72,6 @@ figure;
 
 R2 = 1 - sum((target - YHat_cohort) .^ 2) / sum((target - mean(target)) .^ 2);
 
-% mdl1 = fitlm(target,YHat_cohort);
-% figure
-% p = plot(mdl1);
-% xlabel('Real depressive score');ylabel('Predicted depressive score');
-% title('Prediction based on sleep quality');
-% p(1).Marker = 'o';p(1).Color = 'black';
-
 e = YHat_cohort-target;
 perf = mae(e);
 
