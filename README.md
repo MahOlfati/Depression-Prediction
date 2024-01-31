@@ -3,6 +3,6 @@ This repository provides MATLAB implementation of this paper: Prediction of depr
 
 Run Sleep_predictor.m file for prediction based on behavioral measures. This code is applicable for small number of features (which does not require feature selection).
 
-Run GMV_predictor.m file for prediction based on neuroimage and combination of nuroimage and behavioral measures. This code is suitable for large number of features (since selects the number of features automatically).
+Run GMV_predictor.m file for prediction based on neuroimage and combination of nuroimage and behavioral measures. This code is suitable for large number of features, as selects the number of features automatically.
 
 Run Replication_Prediction.m file for out of cohort prediction.
