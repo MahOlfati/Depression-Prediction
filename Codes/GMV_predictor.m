@@ -34,28 +34,24 @@
 % Read data
 clc,clear,close all
 
-data = readtable('r_without_sleepydep_ReHo.csv');
-data = table2array(data);
-sleep = data(:,2:21);
-depression = data(:,23:37);
-confounding = data(:,38:40);
-family = data(:,41);
-vol = readtable('ReHo.csv');
-vol = table2array(vol);
-%% Predictor and target values
-x = vol;            % x = [sleep vol] : for prediction based on combination of GMV and sleep quality
-y = depression(:,1);
+sleep                  % Put sleep variable here
+depression             % Put depression varible here 
+confounding            % Put confounding variables here
+family                 % Put family ID here
+anxi                   % Put anxiety variable here
+vol                    % Put GMV or fALFF or ReHo variable here
 
-%% Family IDs
-[c,ia,ic] = unique(family,'stable');
+%% Predictor and target variables
+x = vol;               % Put predictors here 
+y = depression(:,1);   % Put target here
 
 %% Nested 10-fold cross-validation considering the family structure
 [test_idx,train_outer_idx,train_inner_idx,validation_idx] = NestedCV(y,family)
 
-%% Training models, saving the best models, and fitting selected models on outer folds
-
+%% Training models on inner training folds, saving the best models, fitting selected models on the entire training sets and prediction of test sets
+kf = 10                % Number of folds
 conf_mdl = cell(kf,size(x,2));
-for h = 1:kf
+for h = 1:kf           % Outer folds
 
     y_test = y(test_idx{h},1); 
     y_train = y(train_outer_idx{h},1);
@@ -64,7 +60,7 @@ for h = 1:kf
     conftrain_outer = confounding(train_outer_idx{h},:);
     conftest = confounding(test_idx{h},:);
    
-    % creating confound removal models (conf_mdl) on training sets and applying them on test sets
+    % creation of confound removal models (conf_mdl) on training sets and applying them on test sets
         [x_train,x_test,conf_mdl] = Confound_Remove_model(h,x_train,x_test,conftrain_outer,conftest);
 
     
@@ -72,12 +68,13 @@ for h = 1:kf
     rng default
     [ranks{h},weights{h}] = relieff(x_train,y_train,10);
 
-    % Training models for each inner folds
-    for i = 1:kf
+    % Training models for each inner fold
+    for i = 1:kf       % Inner folds
         
         % Repeating training process for 10 different feature number
-        parfor j = 1:kf
-            feature_num{h,i,j} = 10+10*j;
+        parfor j = 1:10   
+        
+            feature_num{h,i,j} = 10+10*j;    % Number of features are included 20,30,40,50,60,70,80,90,100,110
             x_trainn = x(train_inner_idx{h,i},ranks{h}(1:feature_num{h,i,j}));
             x_validation = x(validation_idx{h,i},ranks{h}(1:feature_num{h,i,j}));
             y_trainn = y(train_inner_idx{h,i},1);
@@ -85,25 +82,25 @@ for h = 1:kf
             conftrain_inner = confounding(train_inner_idx{h,i},:);
             conf_validation = confounding(validation_idx{h,i},:);
             
-            % regressing out the cnfound variables from inner-training/validation predictors
+            % regressing out the cnfound variables from inner training and validation predictors
             [x_trainn,x_validation] = RegressOut(h,x_trainn,conftrain_inner,x_validation,conf_validation,conf_mdl,ranks,feature_num)
             
             % Training models on inner training folds
             Mdl1= ModelG(i,j,x_trainn,y_trainn)
-            % Calculation of loss-function of validation sets
+            
+            % Assessment of loss-function of validation sets to select optimum feature number and model with best performance
             ls{h,i,j} = loss(Mdl1{i,j},x_validation,y_validation);
         end
         
     end
     
     % Selection of best models for each outer fold based on minimum loss of ineer folds
-    
     v = [ls{h,:,:}];
     [lost{h},best{h}] = min(v);
     [mj{h},mk{h}] = ind2sub([i,j],best{h});
     bestmodel{h} = Mdl1{mj{h},mk{h}}; 
     
-    % Fitting selected model on training set of outer fold
+    % Fitting selected models on the entire training sets and prediction of test sets
     rng default
     tmp{h} = classreg.learning.FitTemplate.makeFromModelParams(bestmodel{h}.ModelParameters);
     newmodel{h} = fit(tmp{h},x_train(:,ranks{h}(1:feature_num{h,mj{h},mk{h}})),y_train);
@@ -112,18 +109,19 @@ for h = 1:kf
 
 end
 
-%% Plotting
+%% Predicted values
 YHat(cell2mat(test_idx')) = cell2mat(Yhat1');
 YHat = YHat';
 
+%% Plotting
 reg = [YHat,y];
 figure;
 [R,PValue] = corrplot(reg,'testR','on')
 
 R2 = 1 - sum((y - YHat) .^ 2) / sum((y - mean(y)) .^ 2);
 
-e = YHat-y;
-perf = mae(e);
+error = YHat-y;
+perf = mae(error);
 
 % 95% confidence interval
 ts = tinv([0.025 0.975],length(YHat)-1);
@@ -132,5 +130,5 @@ ci = mean(YHat)+ts*sem
 
 MSE = mean(cell2mat(ls1))
 
-%%
+%% Storage of models for out of cohort validation
 save('model_GMV_conf.mat','newmodel','ranks','conf_mdl')
