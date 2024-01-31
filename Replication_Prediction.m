@@ -31,7 +31,6 @@ clear,close,clc
 pre_trained = load('model_*.mat');        % Put model, which has been saved by sleep_predictor.m or GMV_predictor.m file, here
 
 % Initializing parameters
-
 sleep                  % Put sleep variable of the cohort here
 depression             % Put depression varible of the cohort here 
 confounding            % Put confounding variablesof the cohort here
@@ -67,7 +66,6 @@ end
 YHat_cohort = mean(yhat_cohort,2);
 
 %% Plotting
-
 reg = [YHat_cohort,target];
 figure;
 [R,PValue] = corrplot(reg,'testR','on')
@@ -90,5 +88,6 @@ sem = std(YHat_cohort)/sqrt(length(YHat_cohort));
 ci = mean(YHat_cohort)+ts*sem
 
 MSE = mean(loss_cohort)
+
 %% Storage of results
 save('sleep_hcpaging.mat')
