@@ -90,5 +90,5 @@ sem = std(YHat_cohort)/sqrt(length(YHat_cohort));
 ci = mean(YHat_cohort)+ts*sem
 
 MSE = mean(loss_cohort)
-%% Saving results
+%% Storage of results
 save('sleep_hcpaging.mat')
