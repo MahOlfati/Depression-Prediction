@@ -120,8 +120,8 @@ figure;
 
 R2 = 1 - sum((y - YHat) .^ 2) / sum((y - mean(y)) .^ 2);
 
-error = YHat-y;
-perf = mae(error);
+e = YHat-y;
+perf = mae(e);
 
 % 95% confidence interval
 ts = tinv([0.025 0.975],length(YHat)-1);
