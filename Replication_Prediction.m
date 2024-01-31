@@ -2,19 +2,19 @@
 %            R E P L I C A T I O N     P R E D I C T I O N                %
 % ----------------------------------------------------------------------- %
 % This script predicts depressive symptoms of Achenbach questionnaire     % 
-% in out of sample dataset using pre-trained models on HCP dataset.       %
+% in out of cohort dataset using pre-trained models on HCP dataset.       %
 %                                                                         %
 %   Input parameters:                                                     %
 %       - pre_trained:      Pre-trained model contains models and their   %
 %                           features' ranks.                              %
-%       - vol:              473 GMV features.                             %
+%       - vol:              473 GMV or fALFF or ReHo features.            %
 %       - depression:       Achenbach questionnaire scores.               %
 %       - sleep:            Sleep quality parameters.                     %
 %       - confounding:      Age,gender, ant tGMV considered as confound   %
 %                           variables.                                    %
 %                                                                         %
 %   Output variables:                                                     %
-%       - YHat_nki:         Predicted values.                             %
+%       - YHat_cohort:         Predicted values.                          %
 %       - R2:               Coefficient of determination.                 %
 %       - perf:             Mean absolute error.                          %
 %       - ci:               95% confidence interval.                      %
@@ -28,27 +28,26 @@
 % Read data
 clear,close,clc
 
-pre_trained = load('model_sleep_conf.mat');        % model_sleep_*: for sleep, model_GMV_*: for GMV, model_sleepGMV_*: for combination
+pre_trained = load('model_*.mat');        % Put model, which has been saved by sleep_predictor.m or GMV_predictor.m file, here
 
 % Initializing parameters
-data = xlsread('r_nki.csv');
-% BDI_nki = data_nki(:,2);
-sleep = data(:,3:22);
-depression = data(:,23:37);
-confounding = data(:,38:40);
-vol = data(:,41:end);
-% anx = xlsread('anxiety.csv');
-% anx_nki = anx(:,2);
-%% Predictor and target values
-x = [sleep];            % sleep_nki: for sleep_model, vol_nki: for vol_model, [sleep_nki vol_nki]: for combination  
-target = depression(:,1);
-%% Mean prediction of new data based on all pre-trained models
 
+sleep                  % Put sleep variable of the cohort here
+depression             % Put depression varible of the cohort here 
+confounding            % Put confounding variablesof the cohort here
+anxi                   % Put anxiety variable of the cohort here
+vol                    % Put GMV variable of the cohort here
+
+%% Predictor and target vriables
+x = sleep;             % Put predictors here
+y = depression;        % Put target here
+
+%% Mean prediction of new data based on pre-trained models
 feature_number = zeros(1,size(pre_trained.newmodel,2));
-yhat_nki = zeros(size(target,1),size(pre_trained.newmodel,2));
-loss_nki = zeros(1,size(pre_trained.newmodel,2));
+yhat_cohort = zeros(size(target,1),size(pre_trained.newmodel,2));
+loss_cohort = zeros(1,size(pre_trained.newmodel,2));
  
-% prediction of target based on all pre-trained models
+% prediction of target based on pre-trained models
 for model = 1:size(pre_trained.newmodel,2)
     
     % confound removal based on pre-trained models
@@ -59,37 +58,37 @@ for model = 1:size(pre_trained.newmodel,2)
     
     % prediction of targets based on pre-trained models
     feature_number(1,model) = size(pre_trained.newmodel{model}.X,2);
-    yhat_nki(:,model) = predict(pre_trained.newmodel{model},predictor(:,pre_trained.ranks{model}(1:feature_number(1,model))));
-    loss_nki(1,model) = loss(pre_trained.newmodel{model},predictor(:,pre_trained.ranks{model}(1:feature_number(1,model))),target);
+    yhat_cohort(:,model) = predict(pre_trained.newmodel{model},predictor(:,pre_trained.ranks{model}(1:feature_number(1,model))));
+    loss_cohort(1,model) = loss(pre_trained.newmodel{model},predictor(:,pre_trained.ranks{model}(1:feature_number(1,model))),target);
 
 end
 
 % mean prediction
-YHat_nki = mean(yhat_nki,2);
+YHat_cohort = mean(yhat_cohort,2);
 
 %% Plotting
 
-reg = [YHat_nki,target];
+reg = [YHat_cohort,target];
 figure;
 [R,PValue] = corrplot(reg,'testR','on')
 
-R2 = 1 - sum((target - YHat_nki) .^ 2) / sum((target - mean(target)) .^ 2);
+R2 = 1 - sum((target - YHat_cohort) .^ 2) / sum((target - mean(target)) .^ 2);
 
-% mdl1 = fitlm(target,YHat_nki);
+% mdl1 = fitlm(target,YHat_cohort);
 % figure
 % p = plot(mdl1);
 % xlabel('Real depressive score');ylabel('Predicted depressive score');
 % title('Prediction based on sleep quality');
 % p(1).Marker = 'o';p(1).Color = 'black';
 
-e = YHat_nki-target;
+e = YHat_cohort-target;
 perf = mae(e);
 
 % 95% confidence interval
-ts = tinv([0.025 0.975],length(YHat_nki)-1);
-sem = std(YHat_nki)/sqrt(length(YHat_nki));
-ci = mean(YHat_nki)+ts*sem
+ts = tinv([0.025 0.975],length(YHat_cohort)-1);
+sem = std(YHat_cohort)/sqrt(length(YHat_cohort));
+ci = mean(YHat_cohort)+ts*sem
 
-MSE = mean(loss_nki)
+MSE = mean(loss_cohort)
 %% Saving results
 save('sleep_hcpaging.mat')
