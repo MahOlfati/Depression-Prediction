@@ -75,7 +75,7 @@ for outer = 1:kfold_o           % Outer folds
         % Repeating training process for 10 different feature number
         parfor loop = 1:feature_set     % Number of feature-set
         
-           feature_num{loop} = 10+10*loop;      % Number of features are included 20,30,40,50,60,70,80,90,100,110 (j = 10 sets)
+           feature_num{loop} = 10+10*loop;      % Number of features are included 20,30,40,50,60,70,80,90,100,110 (loop = 10 sets)
             x_trainn = x(train_inner_idx{outer,inner},ranks{outer}(1:feature_num{loop}));
             x_validation = x(validation_idx{outer,inner},ranks{outer}(1:feature_num{loop}));
             y_trainn = y(train_inner_idx{outer,inner},1);
